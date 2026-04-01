@@ -1,0 +1,12 @@
+.idea/
+*.iml
+*.iws
+
+.DS_Store
+
+build/
+*/build/
+captures/
+.externalNativeBuild/
+.cxx/
+local.properties

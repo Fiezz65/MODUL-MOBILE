@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">Modul1XML</string>
+    <string name="roll">Roll</string>
+    <string name="double_message">Selamat, anda dapat dadu double!</string>
+    <string name="bad_message">Anda belum beruntung!</string>
+
+    <string name="desc_dice_1">Gambar Dadu Kiri</string>
+    <string name="desc_dice_2">Gambar Dadu Kanan</string>
+</resources>

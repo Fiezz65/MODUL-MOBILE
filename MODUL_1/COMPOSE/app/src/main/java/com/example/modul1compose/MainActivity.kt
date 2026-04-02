@@ -32,8 +32,8 @@ class MainActivity : ComponentActivity() {
 @Preview(showBackground = true)
 @Composable
 fun DiceRollerApp() {
-    var leftDice by remember { mutableStateOf(1) }
-    var rightDice by remember { mutableStateOf(1) }
+    var leftDice by remember { mutableStateOf(0) }
+    var rightDice by remember { mutableStateOf(0) }
 
     val context = LocalContext.current
     val msgDouble = stringResource(R.string.double_message)
@@ -74,6 +74,7 @@ fun DiceRollerApp() {
 @Composable
 fun DiceView(value: Int) {
     val imageRes = when (value) {
+        0 -> R.drawable.dice_0
         1 -> R.drawable.dice_1
         2 -> R.drawable.dice_2
         3 -> R.drawable.dice_3

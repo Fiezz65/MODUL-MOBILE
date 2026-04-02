@@ -16,8 +16,8 @@ class MainActivity : AppCompatActivity() {
         val diceImage2: ImageView = findViewById(R.id.diceImage2)
         val rollButton: Button = findViewById(R.id.rollButton)
 
-        diceImage1.setImageResource(R.drawable.dice_1)
-        diceImage2.setImageResource(R.drawable.dice_1)
+        diceImage1.setImageResource(R.drawable.dice_0)
+        diceImage2.setImageResource(R.drawable.dice_0)
 
         rollButton.setOnClickListener {
             val result1 = (1..6).random()

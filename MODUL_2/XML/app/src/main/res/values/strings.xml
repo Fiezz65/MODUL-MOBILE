@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">Modul 2 XML</string>
+
+    <string-array name="tip_percentages">
+        <item>15%</item>
+        <item>18%</item>
+        <item>20%</item>
+    </string-array>
+</resources>

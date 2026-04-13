@@ -38,7 +38,7 @@ class MainActivity : AppCompatActivity() {
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
 
             override fun afterTextChanged(s: Editable?) {
-                hitungTip()
+                calculateTip()
             }
         })
 
@@ -54,42 +54,42 @@ class MainActivity : AppCompatActivity() {
         }
 
         spinnerTip.setOnItemClickListener { parent, view, position, id ->
-            hitungTip()
+            calculateTip()
         }
 
         switchRoundUp.setOnCheckedChangeListener { buttonView, isChecked ->
-            hitungTip()
+            calculateTip()
         }
     }
 
-    private fun hitungTip() {
-        val textTagihan = etBillAmount.text.toString()
-        var jumlahTagihan = 0.0
+    private fun calculateTip() {
+        val amountInput = etBillAmount.text.toString()
+        var amount = 0.0
 
         try {
-            jumlahTagihan = textTagihan.toDouble()
+            amount = amountInput.toDouble()
         } catch (e: Exception) {
-            jumlahTagihan = 0.0
+            amount = 0.0
         }
 
-        val textPersen = spinnerTip.text.toString()
-        var persenTip = 15.0
+        val tipInput = spinnerTip.text.toString()
+        var tipPercent = 15.0
 
-        if (textPersen == "15%") {
-            persenTip = 15.0
-        } else if (textPersen == "18%") {
-            persenTip = 18.0
-        } else if (textPersen == "20%") {
-            persenTip = 20.0
+        if (tipInput == "15%") {
+            tipPercent = 15.0
+        } else if (tipInput == "18%") {
+            tipPercent = 18.0
+        } else if (tipInput == "20%") {
+            tipPercent = 20.0
         }
 
-        var hasilTip = (persenTip / 100) * jumlahTagihan
+        var tip = (tipPercent / 100) * amount
 
         if (switchRoundUp.isChecked == true) {
-            hasilTip = ceil(hasilTip)
+            tip = ceil(tip)
         }
 
-        val formatUang = NumberFormat.getCurrencyInstance().format(hasilTip)
-        tvTipAmount.text = "Tip Amount: " + formatUang
+        val formattedTip = NumberFormat.getCurrencyInstance().format(tip)
+        tvTipAmount.text = "Tip Amount: " + formattedTip
     }
 }

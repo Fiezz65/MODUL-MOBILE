@@ -50,7 +50,15 @@ class HomeFragment : Fragment() {
 
     private fun setupHighlightList() {
         binding.rvHighlight.layoutManager = LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false)
-        binding.rvHighlight.adapter = HighlightAdapter(GameData.gameList)
+        binding.rvHighlight.adapter = HighlightAdapter(
+            games = GameData.gameList,
+            onItemClick = { game ->
+                val bundle = Bundle().apply {
+                    putInt("gameId", game.id)
+                }
+                findNavController().navigate(R.id.action_homeFragment_to_detailFragment, bundle)
+            }
+        )
     }
 
     private fun setupGameList() {

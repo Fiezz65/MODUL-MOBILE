@@ -45,7 +45,11 @@ fun HomeScreen(navController: androidx.navigation.NavController) {
                 Text(stringResource(R.string.title_highlight), modifier = Modifier.padding(16.dp), fontWeight = FontWeight.SemiBold)
                 LazyRow(contentPadding = PaddingValues(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     items(GameData.gameList) { game ->
-                        Card(Modifier.size(200.dp, 120.dp), shape = RoundedCornerShape(12.dp)) {
+                        Card(
+                            onClick = { navController.navigate("detail/${game.id}") },
+                            modifier = Modifier.size(200.dp, 120.dp),
+                            shape = RoundedCornerShape(12.dp)
+                        ) {
                             Image(painterResource(game.imageRes), null, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize())
                         }
                     }

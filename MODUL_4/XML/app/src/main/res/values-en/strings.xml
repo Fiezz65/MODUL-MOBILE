@@ -1,0 +1,12 @@
+<resources>
+    <string name="app_name">Lixx Favorite Game</string>
+    <string name="title_highlight">Item Highlight</string>
+    <string name="btn_browser">Browser</string>
+    <string name="btn_detail">Detail</string>
+    <string name="title_settings">Language Settings</string>
+    <string name="btn_indonesia">Indonesian</string>
+    <string name="btn_english">English</string>
+    <string name="title_detail">Detail</string>
+    <string name="title_plot">Plot</string>
+    <string name="cd_game_image">Game image</string>
+</resources>

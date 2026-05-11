@@ -1,0 +1,12 @@
+<resources>
+    <string name="app_name">Game Favorit Lixx</string>
+    <string name="title_highlight">Sorotan Item</string>
+    <string name="btn_browser">Peramban</string>
+    <string name="btn_detail">Detail</string>
+    <string name="title_settings">Pengaturan Bahasa</string>
+    <string name="btn_indonesia">Bahasa Indonesia</string>
+    <string name="btn_english">Bahasa Inggris</string>
+    <string name="title_detail">Detail</string>
+    <string name="title_plot">Plot</string>
+    <string name="cd_game_image">Gambar game</string>
+</resources>

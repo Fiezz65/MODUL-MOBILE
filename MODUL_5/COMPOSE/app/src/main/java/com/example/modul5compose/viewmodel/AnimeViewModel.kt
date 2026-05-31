@@ -18,15 +18,20 @@ class AnimeViewModel(
     private val _animeState = MutableStateFlow<NetworkResult<List<Anime>>>(NetworkResult.Loading)
     val animeState: StateFlow<NetworkResult<List<Anime>>> = _animeState.asStateFlow()
 
+    private val _searchQuery = MutableStateFlow("")
+    val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
+
     private var loadJob: Job? = null
 
-    init {
+    fun onSearchQueryChanged(newQuery: String, lang: String) {
+        _searchQuery.value = newQuery
+        loadAnime(lang, newQuery)
     }
 
-    fun loadAnime(lang: String = "en-US") {
+    fun loadAnime(lang: String = "en-US", query: String = "") {
         loadJob?.cancel()
         loadJob = viewModelScope.launch {
-            repository.getAnimeStream(lang).collect { result ->
+            repository.getAnimeStream(lang, query).collect { result ->
                 _animeState.value = result
             }
         }

@@ -9,4 +9,3 @@ data class Anime(
     val imageRes: Int,
     val url: String
 )
-

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-
-    <style name="Theme.Modul5compose" parent="android:Theme.Material.Light.NoActionBar" />
+    <!-- Gunakan Theme.AppCompat agar tidak crash -->
+    <style name="Theme.Modul5compose" parent="Theme.AppCompat.DayNight.NoActionBar" />
 </resources>

@@ -7,5 +7,6 @@ data class Anime(
     val plotId: String,
     val plotEn: String,
     val imageRes: Int,
-    val url: String
+    val url: String,
+    val posterUrl: String?
 )

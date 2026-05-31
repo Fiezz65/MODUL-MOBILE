@@ -10,26 +10,25 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.*
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import coil.compose.AsyncImage
+import com.example.modul5compose.data.NetworkResult
 import com.example.modul5compose.viewmodel.AnimeViewModel
-import com.example.modul5compose.viewmodel.AnimeViewModelFactory
 
 @Composable
 fun DetailScreen(
     navController: androidx.navigation.NavController,
-    animeId: Int?
+    animeId: Int?,
+    viewModel: AnimeViewModel
 ) {
-    val viewModel: AnimeViewModel = viewModel(factory = AnimeViewModelFactory("Hafiz Perdana"))
-    val animes by viewModel.animes.collectAsState()
-    val anime = animeId?.let { id -> animes.firstOrNull { it.id == id } }
+    val state by viewModel.animeState.collectAsState()
+    val anime = animeId?.let { viewModel.animeById(it) }
     val lang = LocalConfiguration.current.locales.get(0).language
     val overviewLabel = if (lang == "in" || lang == "id") "Sinopsis" else "Overview"
 
@@ -54,15 +53,22 @@ fun DetailScreen(
             }
         }
     ) { p ->
-        anime?.let {
+        when (state) {
+            NetworkResult.Loading -> Box(Modifier.fillMaxSize().padding(p), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator()
+            }
+            is NetworkResult.Error -> Box(Modifier.fillMaxSize().padding(p), contentAlignment = Alignment.Center) {
+                Text("Data tidak tersedia")
+            }
+            is NetworkResult.Success -> anime?.let {
             Column(Modifier.fillMaxSize().padding(p).verticalScroll(rememberScrollState()).padding(16.dp)) {
                 Surface(
-                    modifier = Modifier.fillMaxWidth().height(260.dp).clip(RoundedCornerShape(16.dp)),
+                    modifier = Modifier.fillMaxWidth().height(260.dp),
                     color = Color(0xFF1A1A1A)
                 ) {
                     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Image(
-                            painter = painterResource(id = it.imageRes),
+                        AsyncImage(
+                            model = it.posterUrl ?: it.imageRes,
                             contentDescription = it.title,
                             modifier = Modifier.fillMaxSize(),
                             contentScale = ContentScale.Crop
@@ -80,6 +86,10 @@ fun DetailScreen(
                 Text(overviewText, modifier = Modifier.padding(top = 8.dp))
 
                 Spacer(Modifier.height(16.dp))
+            }
+            ?: Box(Modifier.fillMaxSize().padding(p), contentAlignment = Alignment.Center) {
+                Text("Film tidak ditemukan")
+            }
             }
         }
     }

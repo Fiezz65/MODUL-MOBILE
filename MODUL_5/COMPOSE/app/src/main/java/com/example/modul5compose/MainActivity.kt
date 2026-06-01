@@ -17,18 +17,8 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         AppPreferencesRepository.applySavedLanguage(this)
         setContent {
-            MaterialTheme(
-                colorScheme = darkColorScheme(
-                    background = Color.Black,
-                    surface = Color(0xFF121212),
-                    onBackground = Color.White,
-                    onSurface = Color.White
-                )
-            ) {
-                Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colorScheme.background
-                ) {
+            MaterialTheme(colorScheme = darkColorScheme(background = Color.Black)) {
+                Surface(modifier = Modifier.fillMaxSize(), color = Color.Black) {
                     AppNavigation()
                 }
             }

@@ -6,4 +6,8 @@
     <string name="title_settings">Pengaturan Bahasa</string>
     <string name="btn_indonesia">Bahasa Indonesia</string>
     <string name="btn_english">Bahasa Inggris</string>
+    <string name="search_placeholder">Cari anime...</string>
+    <string name="label_release_date">Tanggal rilis</string>
+    <string name="label_overview">Sinopsis</string>
+    <string name="no_description_available">Tidak ada deskripsi tersedia</string>
 </resources>

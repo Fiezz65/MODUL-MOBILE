@@ -4,6 +4,7 @@ data class Anime(
     val id: Int,
     val title: String,
     val year: String,
+    val releaseDate: String,
     val plotId: String,
     val plotEn: String,
     val imageRes: Int,

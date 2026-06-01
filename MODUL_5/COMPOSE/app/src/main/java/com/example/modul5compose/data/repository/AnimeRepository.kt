@@ -11,10 +11,7 @@ import com.example.modul5compose.data.remote.dto.TmdbSearchResultDto
 import com.example.modul5compose.model.Anime
 import com.example.modul5compose.R
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.flowOn
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.flow.*
 
 class AnimeRepository(
     private val apiService: TmdbApiService,
@@ -23,109 +20,91 @@ class AnimeRepository(
     private val seedMovies = AnimeData.animeList
 
     fun getAnimeStream(lang: String, query: String = ""): Flow<NetworkResult<List<Anime>>> = flow {
-        emit(NetworkResult.Loading)
-
         if (query.isBlank()) {
             val cached = animeDao.getAllOnce().map { it.toDomain() }
-            if (cached.isNotEmpty()) emit(NetworkResult.Success(cached))
+            if (cached.isNotEmpty()) {
+                emit(NetworkResult.Success(cached, ""))
+            } else {
+                emit(NetworkResult.Loading)
+            }
 
-            val freshData = fetchRemoteData(lang)
-            if (freshData.isNotEmpty()) {
+            try {
+                val freshData = fetchRemoteData(lang)
                 saveToCache(freshData)
-                emit(NetworkResult.Success(freshData))
-            } else if (cached.isEmpty()) {
-                emit(NetworkResult.Error("Gagal memuat data."))
+                emit(NetworkResult.Success(freshData, ""))
+            } catch (e: Exception) {
+                if (cached.isEmpty()) emit(NetworkResult.Error("Gagal memuat data."))
             }
         } else {
-            val searchResults = performSearch(query, lang)
-            emit(NetworkResult.Success(searchResults))
+            val results = performSearch(query, lang)
+            emit(NetworkResult.Success(results, query))
         }
     }.flowOn(Dispatchers.IO)
 
-    private suspend fun performSearch(query: String, lang: String): List<Anime> = withContext(Dispatchers.IO) {
+    private suspend fun performSearch(query: String, lang: String): List<Anime> {
         val apiLang = if (lang.startsWith("id")) "id-ID" else "en-US"
-        runCatching {
-            apiService.searchTitle(query = query, language = apiLang)
-        }.getOrNull()?.results?.filter { dto ->
-            val isAnimation = dto.genreIds.contains(16)
-            val isJapanese = dto.originalLanguage == "ja" || dto.originCountry.contains("JP")
-            isAnimation && isJapanese
-        }?.map { dto ->
-            val overview = dto.overview?.takeIf { it.isNotBlank() } ?: "No description available."
-            // Jika bahasa Indonesia, gunakan Judul Asli (biasanya Romaji/Jepang), jika Inggris gunakan judul terjemahan
-            val displayTitle = if (apiLang == "id-ID") {
-                dto.originalTitle ?: dto.originalName ?: dto.title ?: dto.name ?: "Unknown"
-            } else {
-                dto.title ?: dto.name ?: dto.originalTitle ?: dto.originalName ?: "Unknown"
+        val response = try { apiService.searchTitle(query, apiLang) } catch (e: Exception) { null }
+
+        val usedIds = mutableSetOf<Int>()
+        return response?.results?.filter {
+            it.genreIds.contains(16) && (it.originalLanguage == "ja" || it.originCountry.contains("JP"))
+        }?.mapNotNull { dto ->
+            val seedMatch = seedMovies.find { seed ->
+                val dtoTitle = (dto.title ?: dto.name ?: "").lowercase()
+                val seedTitle = seed.title.lowercase()
+                dtoTitle.contains(seedTitle) || seedTitle.contains(dtoTitle)
             }
-            
-            Anime(
-                id = dto.id,
-                title = displayTitle,
-                year = (dto.releaseDate ?: dto.firstAirDate ?: "").take(4),
-                plotId = overview,
-                plotEn = overview,
-                posterUrl = NetworkModule.posterUrl(dto.posterPath),
-                imageRes = R.drawable.img_horimiya,
-                url = if (dto.title != null) "https://www.themoviedb.org/movie/${dto.id}" else "https://www.themoviedb.org/tv/${dto.id}"
-            )
+            val finalId = seedMatch?.id ?: dto.id
+            if (usedIds.contains(finalId)) return@mapNotNull null
+            usedIds.add(finalId)
+
+            mapDtoToAnime(dto, seedMatch, apiLang)
         } ?: emptyList()
     }
 
-    private suspend fun fetchRemoteData(lang: String): List<Anime> = withContext(Dispatchers.IO) {
+    private suspend fun fetchRemoteData(lang: String): List<Anime> {
         val apiLang = if (lang.startsWith("id")) "id-ID" else "en-US"
         val currentCache = animeDao.getAllOnce().associateBy { it.id }
-        
-        seedMovies.map { seed ->
-            val cached = currentCache[seed.id]?.toDomain()
-            runCatching {
-                apiService.searchTitle(query = seed.title, language = apiLang)
-            }.getOrNull()?.results?.pickBestMatch(seed).let { remote ->
-                if (remote == null) {
-                    cached ?: seed
-                } else {
-                    val base = cached ?: seed
-                    val displayTitle = if (apiLang == "id-ID") {
-                        remote.originalTitle ?: remote.originalName ?: remote.title ?: remote.name ?: base.title
-                    } else {
-                        remote.title ?: remote.name ?: remote.originalTitle ?: remote.originalName ?: base.title
-                    }
 
-                    base.copy(
-                        title = displayTitle,
-                        year = (remote.releaseDate ?: remote.firstAirDate)?.take(4) ?: base.year,
-                        plotId = if (apiLang.startsWith("id")) {
-                            remote.overview?.takeIf { it.isNotBlank() } ?: base.plotId
-                        } else base.plotId,
-                        plotEn = if (apiLang.startsWith("en")) {
-                            remote.overview?.takeIf { it.isNotBlank() } ?: base.plotEn
-                        } else base.plotEn,
-                        posterUrl = NetworkModule.posterUrl(remote.posterPath) ?: base.posterUrl
-                    )
-                }
+        return seedMovies.map { seed ->
+            val response = try { apiService.searchTitle(seed.title, apiLang) } catch (e: Exception) { null }
+            val remote = response?.results?.pickBestMatch(seed)
+            if (remote != null) {
+                mapDtoToAnime(remote, seed, apiLang)
+            } else {
+                currentCache[seed.id]?.toDomain() ?: seed
             }
         }
     }
 
+    private fun mapDtoToAnime(dto: TmdbSearchResultDto, base: Anime?, apiLang: String): Anime {
+        val isIndo = apiLang == "id-ID"
+        val rawDate = dto.releaseDate ?: dto.firstAirDate ?: ""
+        val formattedDate = if (rawDate.contains("-")) {
+            val parts = rawDate.split("-")
+            if (parts.size == 3) "${parts[2]}-${parts[1]}-${parts[0]}" else rawDate
+        } else rawDate
+
+        return Anime(
+            id = base?.id ?: dto.id,
+            title = if (isIndo) (dto.originalTitle ?: dto.originalName ?: dto.title ?: "Unknown") else (dto.title ?: dto.name ?: dto.originalTitle ?: "Unknown"),
+            year = rawDate.take(4),
+            releaseDate = if (formattedDate.isNotBlank()) formattedDate else base?.releaseDate ?: "-",
+            plotId = if (isIndo) (dto.overview?.takeIf { it.isNotBlank() } ?: base?.plotId ?: "") else (base?.plotId ?: ""),
+            plotEn = if (!isIndo) (dto.overview?.takeIf { it.isNotBlank() } ?: base?.plotEn ?: "") else (base?.plotEn ?: ""),
+            posterUrl = NetworkModule.posterUrl(dto.posterPath),
+            imageRes = base?.imageRes ?: R.drawable.img_horimiya,
+            url = if (dto.title != null) "https://www.themoviedb.org/movie/${dto.id}" else "https://www.themoviedb.org/tv/${dto.id}"
+        )
+    }
+
     private fun List<TmdbSearchResultDto>.pickBestMatch(seed: Anime): TmdbSearchResultDto? {
-        val normalizedSeedTitle = seed.title.lowercase()
-        val perfectMatch = firstOrNull { result ->
-            val resultYear = (result.releaseDate ?: result.firstAirDate ?: "").take(4)
-            val resultTitle = (result.title ?: result.name ?: "").lowercase()
-            resultYear == seed.year && (resultTitle.contains(normalizedSeedTitle) || normalizedSeedTitle.contains(resultTitle))
-        }
-        if (perfectMatch != null) return perfectMatch
-
-        val yearMatch = firstOrNull { result ->
-            val resultYear = (result.releaseDate ?: result.firstAirDate ?: "").take(4)
-            resultYear == seed.year
-        }
-        if (yearMatch != null) return yearMatch
-
-        return firstOrNull { result ->
-            val resultTitle = (result.title ?: result.name ?: "").lowercase()
-            resultTitle.contains(normalizedSeedTitle) || normalizedSeedTitle.contains(resultTitle)
-        } ?: firstOrNull()
+        val normalizedSeed = seed.title.lowercase()
+        return firstOrNull {
+            val resTitle = (it.title ?: it.name ?: "").lowercase()
+            val resYear = (it.releaseDate ?: it.firstAirDate ?: "").take(4)
+            resYear == seed.year && (resTitle.contains(normalizedSeed) || normalizedSeed.contains(resTitle))
+        } ?: firstOrNull { (it.releaseDate ?: it.firstAirDate ?: "").take(4) == seed.year } ?: firstOrNull()
     }
 
     private suspend fun saveToCache(items: List<Anime>) {

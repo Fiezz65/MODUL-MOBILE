@@ -6,42 +6,41 @@ import com.example.modul5compose.data.NetworkResult
 import com.example.modul5compose.data.repository.AnimeRepository
 import com.example.modul5compose.model.Anime
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
-class AnimeViewModel(
-    private val repository: AnimeRepository
-) : ViewModel() {
+class AnimeViewModel(private val repository: AnimeRepository) : ViewModel() {
+    private val _state = MutableStateFlow<NetworkResult<List<Anime>>>(NetworkResult.Loading)
+    val animeState = _state.asStateFlow()
 
-    private val _animeState = MutableStateFlow<NetworkResult<List<Anime>>>(NetworkResult.Loading)
-    val animeState: StateFlow<NetworkResult<List<Anime>>> = _animeState.asStateFlow()
+    private val _query = MutableStateFlow("")
+    val searchQuery = _query.asStateFlow()
 
-    private val _searchQuery = MutableStateFlow("")
-    val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
+    private var job: Job? = null
 
-    private var loadJob: Job? = null
-
-    fun onSearchQueryChanged(newQuery: String, lang: String) {
-        _searchQuery.value = newQuery
-        loadAnime(lang, newQuery)
+    fun loadAnime(lang: String, q: String = _query.value) {
+        job?.cancel()
+        job = viewModelScope.launch {
+            repository.getAnimeStream(lang, q).collect { _state.value = it }
+        }
     }
 
-    fun loadAnime(lang: String = "en-US", query: String = "") {
-        loadJob?.cancel()
-        loadJob = viewModelScope.launch {
-            repository.getAnimeStream(lang, query).collect { result ->
-                _animeState.value = result
+    fun onSearchQueryChanged(newQ: String, lang: String) {
+        _query.value = newQ
+        job?.cancel()
+        if (newQ.isBlank()) {
+            loadAnime(lang, "")
+        } else {
+            job = viewModelScope.launch {
+                delay(500)
+                loadAnime(lang, newQ)
             }
         }
     }
 
-    fun animeById(animeId: Int): Anime? {
-        val state = animeState.value
-        if (state is NetworkResult.Success) {
-            return state.data.firstOrNull { it.id == animeId }
-        }
-        return null
+    fun animeById(id: Int): Anime? {
+        val s = _state.value
+        return if (s is NetworkResult.Success) s.data.find { it.id == id } else null
     }
 }

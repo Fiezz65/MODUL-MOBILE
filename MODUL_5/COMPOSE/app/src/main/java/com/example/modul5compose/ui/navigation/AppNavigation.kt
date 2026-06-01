@@ -3,44 +3,26 @@ package com.example.modul5compose.ui.navigation
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.example.modul5compose.viewmodel.AnimeViewModel
-import com.example.modul5compose.viewmodel.AnimeViewModelFactory
 import com.example.modul5compose.ui.screen.DetailScreen
 import com.example.modul5compose.ui.screen.HomeScreen
 import com.example.modul5compose.ui.screen.SettingsScreen
+import com.example.modul5compose.viewmodel.AnimeViewModel
+import com.example.modul5compose.viewmodel.AnimeViewModelFactory
 
 @Composable
 fun AppNavigation() {
-    // 1. Gunakan NavHostController secara eksplisit
-    val navController: NavHostController = rememberNavController()
-    val context = LocalContext.current
-    
-    // 2. Ganti nama variabel agar TIDAK bentrok dengan nama fungsi viewModel()
-    val animeViewModel: AnimeViewModel = viewModel(
-        factory = AnimeViewModelFactory(context)
-    )
+    val nav = rememberNavController()
+    val vm: AnimeViewModel = viewModel(factory = AnimeViewModelFactory(LocalContext.current))
 
-    NavHost(
-        navController = navController,
-        startDestination = "home"
-    ) {
-        composable("home") {
-            HomeScreen(navController = navController, viewModel = animeViewModel)
+    NavHost(navController = nav, startDestination = "home") {
+        composable("home") { HomeScreen(nav, vm) }
+        composable("detail/{id}") { backStack ->
+            val id = backStack.arguments?.getString("id")?.toIntOrNull()
+            DetailScreen(nav, vm, id)
         }
-        composable("detail/{animeId}") { backStackEntry ->
-            val animeId = backStackEntry.arguments?.getString("animeId")?.toIntOrNull()
-            DetailScreen(
-                navController = navController,
-                animeId = animeId,
-                viewModel = animeViewModel
-            )
-        }
-        composable("settings") {
-            SettingsScreen(navController = navController)
-        }
+        composable("settings") { SettingsScreen(nav) }
     }
 }

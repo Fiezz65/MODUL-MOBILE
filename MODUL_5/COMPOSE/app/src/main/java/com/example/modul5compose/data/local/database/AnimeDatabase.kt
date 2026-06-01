@@ -9,7 +9,7 @@ import com.example.modul5compose.data.local.entity.AnimeEntity
 
 @Database(
     entities = [AnimeEntity::class],
-    version = 1,
+    version = 2,
     exportSchema = false
 )
 abstract class AnimeDatabase : RoomDatabase() {
@@ -25,7 +25,10 @@ abstract class AnimeDatabase : RoomDatabase() {
                     context.applicationContext,
                     AnimeDatabase::class.java,
                     "anime_database"
-                ).build().also { instance = it }
+                )
+                    .fallbackToDestructiveMigration(dropAllTables = true)
+                    .build()
+                    .also { instance = it }
             }
         }
     }

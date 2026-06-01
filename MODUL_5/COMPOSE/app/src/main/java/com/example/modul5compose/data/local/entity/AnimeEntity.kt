@@ -9,6 +9,7 @@ data class AnimeEntity(
     @PrimaryKey val id: Int,
     val title: String,
     val year: String,
+    val releaseDate: String,
     val plotId: String,
     val plotEn: String,
     val imageRes: Int,
@@ -17,29 +18,6 @@ data class AnimeEntity(
     val updatedAt: Long
 )
 
-fun AnimeEntity.toDomain(): Anime {
-    return Anime(
-        id = id,
-        title = title,
-        year = year,
-        plotId = plotId,
-        plotEn = plotEn,
-        imageRes = imageRes,
-        url = url,
-        posterUrl = posterUrl
-    )
-}
+fun AnimeEntity.toDomain() = Anime(id, title, year, releaseDate, plotId, plotEn, imageRes, url, posterUrl)
 
-fun Anime.toEntity(updatedAt: Long): AnimeEntity {
-    return AnimeEntity(
-        id = id,
-        title = title,
-        year = year,
-        plotId = plotId,
-        plotEn = plotEn,
-        imageRes = imageRes,
-        url = url,
-        posterUrl = posterUrl,
-        updatedAt = updatedAt
-    )
-}
+fun Anime.toEntity(ts: Long) = AnimeEntity(id, title, year, releaseDate, plotId, plotEn, imageRes, url, posterUrl, ts)

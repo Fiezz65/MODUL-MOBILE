@@ -88,7 +88,7 @@ fun HomeScreen(navController: NavController, vm: AnimeViewModel) {
                 singleLine = true
             )
 
-            Box(Modifier.weight(1f)) {
+            Box(Modifier.weight(1f).fillMaxSize()) {
                 if (lastData.isNotEmpty()) {
                     MainList(lastData, navController, lastQ.isNotEmpty(), listState)
                 }
